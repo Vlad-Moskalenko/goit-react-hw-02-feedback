@@ -14,7 +14,7 @@ export class App extends Component {
     const feedbackRating = e.target.dataset.feedback;
 
     this.setState(prevState => ({
-      [feedbackRating]: ++prevState[feedbackRating],
+      [feedbackRating]: prevState[feedbackRating] + 1,
     }));
   };
 
