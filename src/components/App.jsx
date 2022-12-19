@@ -1,56 +1,70 @@
-import { Section } from './Statistics/Section';
-import { Statistics } from './Statistics/Statistics';
-import { FeedbackOptions } from './Statistics/FeedbackOptions';
-import { Notification } from './Statistics/Notification';
 import { Component } from 'react';
+import { nanoid } from 'nanoid';
+
+import { Section } from './Section/Section';
+import ContactForm from './ContactForm/ContactForm';
+import { ContactsList } from './ContactsList/ContactsList';
+import { Filter } from './Filter/Filter';
 
 export class App extends Component {
   state = {
-    good: 0,
-    neutral: 0,
-    bad: 0,
+    contacts: [],
+    filter: '',
   };
 
-  onLeaveFeedBack = e => {
-    const currentState = e.target.name;
-    this.setState(state => {
-      return { [currentState]: state[currentState] + 1 };
-    });
+  onSearch = e => this.setState({ filter: e.target.value });
+
+  onAddContact = ({ name, number }) => {
+    if (this.isNotUniqueContact(name)) {
+      return alert(`${name} is already in contacts`);
+    }
+
+    const newContact = {
+      id: nanoid(),
+      name: name,
+      number: number,
+    };
+
+    this.setState(prevState => ({
+      contacts: [...prevState.contacts, newContact],
+    }));
   };
 
-  countTotalFeedback = () => {
-    return Object.values(this.state).reduce((acc, el) => (acc += el));
+  isNotUniqueContact = newContactName => {
+    return this.state.contacts.find(
+      ({ name }) => name.toLowerCase() === newContactName.toLowerCase()
+    );
   };
 
-  countPositiveFeedbackPercentage = () => {
-    if (this.state.good)
-      return Math.floor((this.state.good / this.countTotalFeedback()) * 100);
-    return 0;
+  onDeleteContact = contactId => {
+    this.setState(({ contacts }) => ({
+      contacts: contacts.filter(({ id }) => id !== contactId),
+    }));
   };
 
   render() {
-    const { good, neutral, bad } = this.state;
+    const { contacts, filter } = this.state;
+    const { onSearch, onAddContact, onDeleteContact } = this;
     return (
-      <div className="app">
-        <Section title="Please leave feedback">
-          <FeedbackOptions
-            options={this.state}
-            onLeaveFeedBack={this.onLeaveFeedBack}
-          />
+      <main className="app-wrapper">
+        <Section title="Phonebook">
+          <ContactForm onAddContact={onAddContact} />
         </Section>
-        <Section title="Statistics">
-          {!this.countTotalFeedback()
-          ? <Notification message="There is no feedback" />
-          : <Statistics
-              good={good}
-              neutral={neutral}
-              bad={bad}
-              total={this.countTotalFeedback()}
-              positivePercentage={this.countPositiveFeedbackPercentage()}
-            />
-          }
+        <Section title="Contacts">
+          {contacts.length > 0 ? (
+            <>
+              <Filter onSearch={onSearch} filter={filter} />
+              <ContactsList
+                contactsList={contacts}
+                filter={filter}
+                onDeleteContact={onDeleteContact}
+              />
+            </>
+          ) : (
+            <p>There are no contacts yet...</p>
+          )}
         </Section>
-      </div>
+      </main>
     );
   }
 }
